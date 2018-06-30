@@ -1,4 +1,4 @@
-let insideTriggerPoint = false
+let showing = false
 $(window).scroll(function () {
   // If browser window is large/full-screen, it might not be able to scroll to bottom 10% point,
   // so trigger also works on document.height() - window.height()
@@ -6,29 +6,32 @@ $(window).scroll(function () {
   const lowestScrollPoint = $(document).height() - $(window).height()
   const triggerPoint = Math.min(bottomTenPercentHeight, lowestScrollPoint)
 
-  if ($(window).scrollTop() >= triggerPoint && !insideTriggerPoint) {
-    $.get( "/cart", function( data ) {
-      let doc = $.parseHTML( data )
-      let cart = {
-        itemCount: getTotalItemsInCart(doc),
-        total: getCartTotal(doc),
-        images: getImages(doc),
-      }
+  if ($(window).scrollTop() >= triggerPoint) {
+    if (showing) return
+    showing = true
 
-      insideTriggerPoint = true
-
-      const $overlay = buildOverlay()
-      const $transparentOverlay = buildTransparentOverlay()
-      $transparentOverlay.append(buildInfoBox(cart, $overlay, $transparentOverlay))
-      $(document.body).append($overlay)
-      $($overlay).fadeTo( 500 , 0.8, () => {
-        $(document.body).append($transparentOverlay)
-      })
-    })
-  } else if ($(window).scrollTop() < triggerPoint && insideTriggerPoint) {
-    insideTriggerPoint = false
+    showInfoModal()
   }
 });
+
+const showInfoModal = () => {
+  $.get( "/cart", function( data ) {
+    let doc = $.parseHTML( data )
+    let cart = {
+      itemCount: getTotalItemsInCart(doc),
+      total: getCartTotal(doc),
+      images: getImages(doc),
+    }
+
+    const $overlay = buildOverlay()
+    const $transparentOverlay = buildTransparentOverlay()
+    $transparentOverlay.append(buildInfoBox(cart, $overlay, $transparentOverlay))
+    $(document.body).append($overlay)
+    $($overlay).fadeTo( 500 , 0.8, () => {
+      $(document.body).append($transparentOverlay)
+    })
+  })
+}
 
 //***** FETCH CART DETAILS *****//
 // TOTAL ITEMS - returns integer
@@ -46,13 +49,7 @@ const getCartTotal = (doc) => {
 // Item images - returns array of img nodes
 const getImages = (doc) => {
   const nodes = Array.from($(doc).find('td.item-image').find('a').find('img'))
-  if (nodes.length > 0) {
-    return nodes.map(img => {
-      const newImage = $('<img />').attr({ "src": img.src})
-        return newImage
-    })
-  }
-  return [];
+  return (nodes.length > 0) ? nodes : []
 }
 
 //***** BUILD OVERLAYS *****//
@@ -127,13 +124,13 @@ const buildInfoBox = (cart, overlay, transparentOverlay) => {
 
 
   // IMAGES
-  const $imageDiv = $('<div></div>').css({ "margin-top": "20px", "text-align": "center"})
+  const $imageDiv = $('<div></div>').css({ "text-align": "center"})
   cart.images.forEach(node => $imageDiv.append(node))
   $ul.append($imageDiv)
 
   $box.append($ul)
 
-  //***** BUTTONS *****//
+  // BUTTONS
   const buttonStyle = {
     padding:        "14px 30px",
     "font-family":  "ars_maquette_probold,sans-serif",
@@ -147,31 +144,32 @@ const buildInfoBox = (cart, overlay, transparentOverlay) => {
     "background-color": "#ddd",
   }
 
-  const configureButton = (button) => {
-    button.css(buttonStyle)
-    button.hover(() => {
-      $(this).css({"background-color":"red", color: "white"})
-    });
-    button.mouseleave(() => {
-      $(this).css({"background-color": "#ddd", color: "black"})
-    });
+  const buildButton = (text, handler) => {
+    const $button = $(`<button>${text}</button>`)
+    $button.css(buttonStyle)
+    $button.hover((e) => {
+      $(e.target).css({"background-color":"red", color: "white"})
+    }, (e) => {
+      $(e.target).css({"background-color": "#ddd", color: "black"});
+    })
+    $button.click(handler)
+    return $button
   }
 
-  const $closeButton = $('<button>CLOSE</button>')
-  configureButton($closeButton)
-  $closeButton.click(() => {
-    overlay.hide()
-    transparentOverlay.hide()
+  const $closeButton = buildButton('CLOSE', () => {
+    overlay.remove()
+    transparentOverlay.remove()
+    showing = false
   })
 
-  const $cartButton = $('<button>SEE CART</button>')
-  configureButton($cartButton)
-  $cartButton.click(() => window.location = "/cart")
+  const $cartButton = buildButton('SEE CART', () => {
+    window.location = "/cart"
+  })
 
   const $buttonsDiv = $('<div></div>')
   $buttonsDiv.append($cartButton)
   $buttonsDiv.append($closeButton)
   $ul.after($buttonsDiv)
-  
+
   return $box
 }
