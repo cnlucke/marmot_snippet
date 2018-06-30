@@ -140,7 +140,6 @@ const buildInfoBox = (cart, overlay, transparentOverlay) => {
     "text-align":   "center",
     margin:         "5px",
     width:          "80%",
-    "text-transform":   "uppercase",
     "background-color": "#ddd",
   }
 
