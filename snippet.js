@@ -66,22 +66,25 @@ class Cart {
       done(this)
     })
   }
-  //***** FETCH CART DETAILS *****//
+
+  getNode(doc, selector) {
+    return Array.from($(doc).find(selector))
+  }
   // TOTAL ITEMS - returns integer
   getTotalItemsInCart(doc) {
-    const nodes = Array.from($(doc).find('.input-change-value'))
+    const nodes = this.getNode(doc, '.input-change-value')
     return nodes.reduce( (sum, item) => sum + parseInt(item.value), 0)
   }
 
   // CART TOTAL DOLLARS - returns string of form "$685.00"
   getCartTotal(doc) {
-    const node = Array.from($(doc).find('tr.order-total').find('td.order-value'))[0]
+    const node = this.getNode(doc, 'tr.order-total td.order-value')[0]
     return (node) ? node.innerText : '$0.00'
   }
 
   // Item images - returns array of img nodes
   getImages(doc) {
-    const nodes = Array.from($(doc).find('td.item-image').find('a').find('img'))
+    const nodes = this.getNode(doc ,'td.item-image a img')
     return (nodes.length > 0) ? nodes : []
   }
 }
@@ -101,7 +104,6 @@ class InfoModal {
   }
 
   render() {
-    console.log("here!")
     this.overlay = this.buildOverlay()
     this.transparentOverlay = this.buildTransparentOverlay()
     this.transparentOverlay.append(this.buildBox())
@@ -193,6 +195,7 @@ class InfoModal {
 
 const infoModal = new InfoModal()
 
+// TRIGGER
 $(window).scroll(function () {
   // If browser window is large/full-screen, it might not be able to scroll to bottom 10% point,
   // so trigger also works on document.height() - window.height()
