@@ -18,4 +18,4 @@
 
 Here are the ways I dealt with items less than or more than 2:
   * Currently the snippet grabs all items in cart regardless of quantity of items and handles 0 items in cart as well.
-  * The info box that displays on the overlay will expand to accommodate multiple images that may take up more than one row.
+  * The info box that displays on the overlay will expand to accommodate multiple rows of images.
